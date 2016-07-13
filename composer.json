@@ -1,0 +1,16 @@
+{
+    "name": "htfy96/MagicTransformer.php",
+    "description": "Bidirectional array-like struct mapper in PHP ",
+    "keywords": ["transform"],
+    "license": "Apache v2",
+    "authors": [
+        {
+            "name": "Zheng Luo",
+            "email": "vicluo96@gmail.com",
+            "homepage": "https://b.intmainreturn0.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.4"
+    }
+}
