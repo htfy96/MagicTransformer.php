@@ -27,16 +27,16 @@ interface iBidirectionTrans {
 //定义映射关系
 $trans = M::make_mapper(
             [
-                'abc' => M::$__0, // 'abc'对应的键值就是$left[0]
+                'abc' => M::$self[0], // 'abc'对应的键值就是$left[0]
                 'ccc' => M::make_chain( // 正向映射时，将第一个映射器的值传给第二个；反向则相反
-                    M::$__1, // make_chain的第二个参数接收到$left是这里的$left[1]
+                    M::$self[1], // make_chain的第二个参数接收到$left是这里的$left[1]
                     [
-                        'yyy' => M::$__self // __self是一个始终将自身映射到自身的映射器
+                        'yyy' => M::$self // self是一个始终将自身映射到自身的映射器
                     ]
                 ),
-                'ddd' => M::make_key_mapper('eee', 'fff'), // 正向映射$left['eee']['fff'], 反向则设置$left['eee']['fff']
+                'ddd' => M::self['eee']['fff'], // 正向映射$left['eee']['fff'], 反向则设置$left['eee']['fff']
                 'eee' => M::make_chain(
-                    M::$__2, // 现在make_list_mapper所接受到到$left是这里的$left[2]
+                    M::$self[2], // 现在make_list_mapper所接受到到$left是这里的$left[2]
                     M::make_list_mapper( // 将参数的mapper作用到$left的每一项上，反向则先获取每一项再构造出一个数组
                         M::make_func_mapper( // 自定义映射器！
                             function($left_val) { // 正向
@@ -138,6 +138,9 @@ M::make_key_mapper('abc', 'def'); //$left['abc']['def']
 
 #### __0/__1/__2/__3
 make_key_mapper(0), ..., make_key_mapper(3) 的别名
+
+#### self
+是一个始终映射到自身的映射器。重载了魔术方法[]，其效果与make_key_mapper相同。
 
 #### make_chain
 参数是映射器。
