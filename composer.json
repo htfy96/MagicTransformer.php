@@ -1,5 +1,5 @@
 {
-    "name": "htfy96/MagicTransformer.php",
+    "name": "htfy96/magic-transformer.php",
     "description": "Bidirectional array-like struct mapper in PHP ",
     "keywords": ["transform"],
     "license": "Apache v2",
