@@ -1,46 +1,48 @@
 # MagicTransformer.php
-Bidirectional array-like struct mapper in PHP. 
+PHP的双向映射模型
 
-## Initiative
-Model transformation is common in PHP project. Traditional way is to write `A::transformToB` and `A::setFromB` method. However in most cases the logic behind these two methods is almost the same, except that one constructs object and the other extract information from object.
+[English Version](https://github.com/htfy96/MagicTransformer.php/tree/master)
 
-Then comes this library: define transformation once, use it bidirectionally.
+## 设计动机
+在PHP开发之中，把一种模型变化到另一种模型是非常常见的操作。传统的方式是写两个`transformToB`和`setFromB`方法。然而，在很多时候我们发现其中的逻辑基本是相同的，只不过一个构造对象，一个从对象中析出信息。
 
-## Usage
+因此就有了这个库：变换模型一次定义，双向使用。
+
+## 用法
 ```php
 require_once 'magic_transformer.php';
 use MagicTransform\M as M;
 ```
 
-A mapper is an object that implments `MagicTransform\iBidirectionTrans`:
+一个映射器（mapper）就是实现 `MagicTransform\iBidirectionTrans`类的实例。
 
 ```php
 interface iBidirectionTrans {
-    public function forward_map($left_val);
-    public function reverse_map($right_val, &$left_obj);
+    public function forward_map($left_val); //正向映射
+    public function reverse_map($right_val, &$left_obj); //逆向映射
 }
 ```
 
 ```php
-//Define transformation
+//定义映射关系
 $trans = M::make_mapper(
             [
-                'abc' => M::$__0, // the value of 'abc' is $left[0]
-                'ccc' => M::make_chain(
-                    M::$__1, // The 2nd argument(which is a mapper) will receive $left[1] as $left
+                'abc' => M::$__0, // 'abc'对应的键值就是$left[0]
+                'ccc' => M::make_chain( // 正向映射时，将第一个映射器的值传给第二个；反向则相反
+                    M::$__1, // make_chain的第二个参数接收到$left是这里的$left[1]
                     [
-                        'yyy' => M::$__self // Use __self to reference $left
+                        'yyy' => M::$__self // __self是一个始终将自身映射到自身的映射器
                     ]
                 ),
-                'ddd' => M::make_key_mapper('eee', 'fff'), // to reference $left['eee']['fff']
+                'ddd' => M::make_key_mapper('eee', 'fff'), // 正向映射$left['eee']['fff'], 反向则设置$left['eee']['fff']
                 'eee' => M::make_chain(
-                    M::$__2, // now $left(in make_list_mapper) is $left[2]
-                    M::make_list_mapper( // Apply the mapper to each item of list
-                        M::make_func_mapper( // customize mapper!
-                            function($left_val) { // forward
+                    M::$__2, // 现在make_list_mapper所接受到到$left是这里的$left[2]
+                    M::make_list_mapper( // 将参数的mapper作用到$left的每一项上，反向则先获取每一项再构造出一个数组
+                        M::make_func_mapper( // 自定义映射器！
+                            function($left_val) { // 正向
                                 return $left_val + 1;
                             },
-                            function ($right_val, &$left_obj) {
+                            function ($right_val, &$left_obj) { // 反向
                                 $left_obj = $right_val - 1;
                             }
                         )
@@ -51,7 +53,7 @@ $trans = M::make_mapper(
 
 $left = ['0th', '1st', [1,2,3], 'eee' => ['fff' => 4]];
 
-$right = $trans->forward_map($left);
+$right = $trans->forward_map($left); // 正向映射
 print_r($right);
 
 /*
@@ -72,14 +74,14 @@ print_r($right);
         )
  */
 
-// Now let's modify $right
+// 我们来修改一下$right
 
 $right['abc'] = '0th0th';
 $right['ccc']['yyy'] = ['1st1st'];
 $right['ddd'] = 100;
 $right['eee'][1] = 7;
 
-$left = array(); // You can use your ORM here!
+$left = array(); // 这里你可以传一个自己的ORM对象进来
 $trans->reverse_map($right, $left);
 
 print_r($left);
@@ -108,11 +110,11 @@ Array
 */
 ```
 
-And that's all!
 
 ## API
 
-All following API is in `MagicTransform` namespace.
+所有的API都定义在`MagicTransform`命名空间下
+
 ### Interface
 #### iBidirectionTrans
 ```php
@@ -122,40 +124,43 @@ interface iBidirectionTrans {
 }
 ```
 
-All mapper shall implement this interface.
+所有mapper都应该实现这个接口。
 
-### Mapper/mapper maker
-All mapper maker is defined in class `M`:
+### Mapper与mapper构造辅助函数
+所有的这些都在`M`类中被定义。
+
 #### make_key_mapper
-maps `$left[$key1][$key2]...`
+映射`$left[$key1][$key2]...`
 
 ```php
 M::make_key_mapper('abc', 'def'); //$left['abc']['def']
 ```
 
 #### __0/__1/__2/__3
-alias of make_key_mapper(0), ..., make_key_mapper(3)
+make_key_mapper(0), ..., make_key_mapper(3) 的别名
 
 #### make_chain
-Map in order Arg1, Arg2, ..., ArgN
+参数是映射器。
+
+正向分别按Arg1, Arg2, ..., ArgN的顺序映射,将前一个输出作为后一个输入；反向则逆序。
 
 ```php
-M::make_chain(M::$__0, M::$__1); // $left[0][1], which is equivalent to make_key_mapper(0, 1)
+M::make_chain(M::$__0, M::$__1); // $left[0][1], 和make_key_mapper(0, 1)等价
 ```
 
 #### make_list_mapper
-accept a mapper and apply it to each item of $left
+将mapper作用到$left这个数组的每一项上
 
 ```php
 M::make_list_mapper(M::$__0); //[$left[0][0], $left[1][0], ...]
 ```
 
 #### make__func_mapper
-Customize your own mapper. The first argument is forward mapper and the second is reverse mapper.
+自定义映射器，第一个参数是正向，第二个是反向。
 
 ```php
-M::make_func_mapper( // customize mapper!
-                    function($left_val) { // forward
+M::make_func_mapper( // 自定义
+                    function($left_val) { // 正向
                         return $left_val + 1;
                     },
                     function ($right_val, &$left_obj) {
@@ -165,9 +170,7 @@ M::make_func_mapper( // customize mapper!
 ```
 
 #### make_mapper
-Transform a simple array to mapper automaticly.
-
-Transformation should be defined with this method.
+自动将一个对象/数组等转化为映射器。
 
 ```php
 make_mapper(
@@ -177,6 +180,6 @@ make_mapper(
         );
 ```
 
-## License
+## 许可证
 
 Apache License.
