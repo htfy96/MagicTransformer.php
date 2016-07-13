@@ -48,16 +48,16 @@ print_r($left);
 //Define transformation
 $trans = M::make_mapper(
     [
-        'abc' => M::$__0, // the value of 'abc' is $left[0]
+        'abc' => M::$self[0], // the value of 'abc' is $left[0]
         'ccc' => M::make_chain(
-            M::$__1, // The 2nd argument(which is a mapper) will receive $left[1] as $left
+            M::$self[1], // The 2nd argument(which is a mapper) will receive $left[1] as $left
             [
-                'yyy' => M::$__self // Use __self to reference $left
+                'yyy' => M::$self // Use __self to reference $left
             ]
         ),
-        'ddd' => M::make_key_mapper('eee', 'fff'), // to reference $left['eee']['fff']
+        'ddd' => M::$self['eee']['fff'], // to reference $left['eee']['fff']
         'eee' => M::make_chain(
-            M::$__2, // now $left(in make_list_mapper) is $left[2]
+            M::$self[2], // now $left(in make_list_mapper) is $left[2]
             M::make_list_mapper( // Apply the mapper to each item of list
                 M::make_func_mapper( // customize mapper!
                     function($left_val) { // forward
@@ -71,6 +71,10 @@ $trans = M::make_mapper(
         )
     ]
 );
+
+echo '<pre>';
+print_r($trans);
+echo '</pre>';
 
 $left = ['0th', '1st', [1,2,3], 'eee' => ['fff' => 4]];
 
