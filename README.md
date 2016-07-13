@@ -1,6 +1,8 @@
 # MagicTransformer.php
 Bidirectional array-like struct mapper in PHP. 
 
+[中文](https://github.com/htfy96/MagicTransformer.php/tree/cn)
+
 ## Initiative
 Model transformation is common in PHP project. Traditional way is to write `A::transformToB` and `A::setFromB` method. However in most cases the logic behind these two methods is almost the same, except that one constructs object and the other extract information from object.
 
